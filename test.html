@@ -7,6 +7,7 @@
     <title>Document</title>
     <script src="./jquery.js"></script>
     <script src="./rotation3D.js"></script>
+    <script src="./vue.js"></script>
     <link rel="stylesheet" href="./iconfont.css">
     <link rel="stylesheet" href="./test.css">
     <link rel="stylesheet" href="./rotation3D.css">
@@ -44,8 +45,11 @@
 </head>
 
 <body>
-    <div>
+    <div id="app">
         <div class="num-list">
+            <div class="num-item" v-for="(num, index) in paddedNumArray" :key="index">
+                <i :class="`iconfont icon-shuzi${num}`"></i>
+            </div>
         </div>
     </div>
     <div class="wrap">
@@ -132,52 +136,74 @@
 
         window.addEventListener("resize", rotation3DResize)
 
-        let x = 999999;
-        let maxCount = 6;
+        // let x = 999999;
+        // let maxCount = 6;
 
-        function initNum() {
-            const numList = document.querySelector(".num-list");
-            numList.innerHTML = ""; // 清空当前的数字显示区域
-            for (let i = 0; i < maxCount; i++) {
-                let num = `
-            <div class="num-item">
-                <i class="iconfont icon-shuzi0"></i>
-            </div>
-        `;
-                numList.innerHTML += num;
-            }
-        }
+        // function initNum() {
+        //     const numList = document.querySelector(".num-list");
+        //     numList.innerHTML = ""; // 清空当前的数字显示区域
+        //     for (let i = 0; i < maxCount; i++) {
+        //         let num = `
+        //     <div class="num-item">
+        //         <i class="iconfont icon-shuzi0"></i>
+        //     </div>
+        // `;
+        //         numList.innerHTML += num;
+        //     }
+        // }
 
-        function updateNumItems() {
-            const numList = document.querySelector(".num-list");
-            while (x.toString().length > maxCount) {
-                let num = `
-            <div class="num-item">
-                <i class="iconfont icon-shuzi0"></i>
-            </div>
-        `;
-                numList.innerHTML += num;
-                maxCount++;
-            }
-        }
+        // function updateNumItems() {
+        //     const numList = document.querySelector(".num-list");
+        //     while (x.toString().length > maxCount) {
+        //         let num = `
+        //     <div class="num-item">
+        //         <i class="iconfont icon-shuzi0"></i>
+        //     </div>
+        // `;
+        //         numList.innerHTML += num;
+        //         maxCount++;
+        //     }
+        // }
 
-        function numChange() {
-            updateNumItems();
-            const numItemList = document.querySelectorAll('.num-item i');
-            x.toString().padStart(maxCount, "0").split('').forEach((num, i) => {
-                numItemList[i].className = `iconfont icon-shuzi${num}`;
-            });
-            x += 1;
-        }
+        // function numChange() {
+        //     updateNumItems();
+        //     const numItemList = document.querySelectorAll('.num-item i');
+        //     x.toString().padStart(maxCount, "0").split('').forEach((num, i) => {
+        //         numItemList[i].className = `iconfont icon-shuzi${num}`;
+        //     });
+        //     x += 1;
+        // }
 
-        initNum();
-        setInterval(() => {
-            numChange();
-        }, 1000);
+        // initNum();
+        // setInterval(() => {
+        //     numChange();
+        // }, 1000);
 
-
-
-
+        new Vue({
+            el: "#app",
+            data() {
+                return {
+                    x: 999999,
+                    intervalId: null,
+                };
+            },
+            computed: {
+                paddedNumArray() {
+                    return this.x.toString().padStart(Math.max(6, this.x.toString().length), '0').split('');
+                },
+            },
+            methods: {},
+            mounted() {
+                this.intervalId = setInterval(() => {
+                    this.x += 1;
+                }, 1000);
+            },
+            beforeDestroy() {
+                if (this.intervalId) {
+                    clearInterval(this.intervalId);
+                }
+            },
+        })
     </script>
 </body>
 
