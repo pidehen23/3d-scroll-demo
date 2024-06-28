@@ -7,14 +7,35 @@
       ? () => +new Date()
       : () => performance.now();
 
+  /**
+   * 计算两点距离
+   * @param points
+   * @returns {number}
+   * distance([{x:0,y:0},{x:1,y:1}]);
+   */
   const distance = (points) => {
     const [p1, p2] = points;
     const a = p2.x - p1.x;
     const b = p2.y - p1.y;
     return Math.sqrt(a * a + b * b);
   };
-
+  /**
+   * 圆公式
+   * @param rotation 弧度
+   * 计算公式：
+   * Math.PI;     //圆周率
+   * Math.sin();  //正弦 x      -左 +右
+   * Math.cos;    //余弦 y      -下 +上
+   */
   const circleMath = {
+    /**
+     * 根据弧度计算角度
+     * @param rotation 弧度
+     * rotation, farScale, xs, xr, ys, yr, itemWidth
+     */
+    // parseRotate: function (rotation) {
+    //     return (180 / Math.PI * rotation) - 180;
+    // },
     parseRotate: (rotation, self) => {
       const sin = Math.sin(rotation);
       const cos = Math.cos(rotation);
@@ -25,6 +46,13 @@
       lastAngle = angle + self.yr * (sin_cos / (Math.PI + 1));
       return lastAngle;
     },
+    /**
+     * 计算scale,x,y
+     * scale    最小尺寸 + ((1 - 最小尺寸) * (sin正弦 + 1) * 0.5)
+     * x        x起点 + (尺寸 * cos余弦 * x半径) - 元素宽度一半
+     * y        y起点 + (尺寸 * sin正弦 * x半径) - 元素宽度一半
+     * farScale, xs, xr, ys, yr, itemWidth
+     */
     parseSXY: (rotation, self) => {
       const { farScale, itemWidth, xs, xr, ys, yr } = self;
       const sin = Math.sin(rotation);
@@ -35,8 +63,8 @@
       const y = ys + sin * yr - itemWidth * 0.5;
       const distanceNumber = distance([
         {
-          x: self.$rotation.offsetWidth / 2 - itemWidth / 2,
-          y: self.$rotation.offsetHeight / 2 - self.itemHeight / 2,
+          x: self.$rotation.offsetWidth / 2 - self.$item.offsetWidth / 2,
+          y: self.$rotation.offsetHeight / 2 - self.$item.offsetHeight / 2,
         },
         { x, y },
       ]);
@@ -45,6 +73,10 @@
     },
   };
 
+  /**
+   * 3D旋转
+   * @param id
+   */
   class Rotation3D {
     constructor(_opts) {
       this.$rotation = document.querySelector(_opts.id);
@@ -118,7 +150,11 @@
       this.render();
       this.goTo(this.currenIndex);
     }
-
+    /**
+     * item样式
+     * x    x起点 + (尺寸 * 余弦 * x压缩) - 元素宽度一半
+     * y    y起点 + (尺寸 * 正弦 * y压缩) - 元素宽度一半
+     */
     itemStyle($item, index, rotation) {
       const { scale, x, y, distanceNumber } = circleMath.parseSXY(
         rotation,
@@ -188,7 +224,9 @@
         // this.$lineList.style.transform = `rotateX(${this.yRadius / 3}deg)`;
       }
     }
-
+    /**
+     * 旋转至index
+     */
     goTo(index) {
       this.currenIndex = index;
 
@@ -205,6 +243,9 @@
       this.scheduleNextFrame();
     }
 
+    /**
+     * 定时器渐近旋转
+     */
     scheduleNextFrame() {
       this.lastTime = time();
 
