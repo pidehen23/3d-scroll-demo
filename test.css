@@ -1,0 +1,27 @@
+.num-list {
+  display: flex;
+  /* background-color: white; */
+  column-gap: 8px;
+}
+
+.num-item {
+  width: 66px;
+  height: 88px;
+  background: #d5eeff;
+  border: 1px solid #aaddff;
+  opacity: 0.4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.num-item i {
+  font-size: 50px;
+  /* color: linear-gradient(180deg, #53BCFF, #466AFF); */
+  background: linear-gradient(180deg, #00c4ff, #0553ea);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  padding: 10px 0;
+}

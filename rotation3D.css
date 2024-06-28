@@ -1,0 +1,258 @@
+/*
+  椭圆会使内部失真    transform: rotateX(50deg);
+*/
+.rotation3D {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    cursor: move;
+    user-select: none;
+    margin: 0 auto;
+    /* margin-top: -100px; */
+    /*border: 1px solid white; border-radius: 100%;*/
+}
+.rotation3D-baseMap{
+    background: url("./image/bg.png");
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 50px;
+    /* left: 10px; */
+}
+.rotation3D .center {
+    /* display: none; */
+    position: absolute;
+    left: 50%;
+    top: 38%;
+    transform: translate(-50%, -50%);
+    font-size: 30px;
+    background: linear-gradient(180deg, #00C4FF 0%, #0553EA 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+.rotation3D .itemList {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 20;
+    overflow: hidden;
+}
+
+.rotation3D .lineList {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    transform-style: preserve-3d;
+}
+
+/*---------------------------点样式---------------------------*/
+.rotation3D__item {
+    position: absolute;
+    display: block;
+    cursor: pointer;
+    width: 180px;
+    height: 180px;
+    text-align: center;
+    line-height: 30px;
+    font-size: 16px;
+    color: white;
+    /*background: #2292ef; border-radius: 4px;*/
+}
+
+.rotation3D__item .scale {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+.rotation3D__item .scale .title{
+    color: #0553EA;
+    font-size: 16px;
+    font-weight: bold;
+    
+}
+.rotation3D__item .scale .num{
+    position: absolute;
+    left: 50%;
+    top: 40%;
+    transform: translate(-50%,-50%);
+    color: #0553EA;
+    font-size: 36px;
+    font-weight: bold;
+}
+.rotation3D__item .cont {
+    position: relative;
+    z-index: 2;
+}
+
+.rotation3D__item .cont .iconfont {
+    font-size: 28px;
+    margin-top: 30px;
+    margin-bottom: 60px;
+    display: block;
+}
+
+.rotation3D__item .cont p {
+    color: #fff;
+}
+
+.rotation3D__item.blue {
+    color: #01e9fc;
+}
+
+.rotation3D__item.green {
+    color: #02e943;
+}
+
+.rotation3D__item.yellow {
+    color: #ffd200;
+}
+
+/*底座*/
+.rotation3D__item .baseImg {
+    /* position: absolute; */
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.rotation3D__item.blue .baseImg {
+    background: url("img/蓝底.png");
+}
+
+.rotation3D__item.green .baseImg {
+    background: url("img/绿底.png");
+}
+
+.rotation3D__item.yellow .baseImg {
+    background: url("img/黄底.png");
+}
+
+/*---------------------------
+    线样式
+    线高为总高的一般
+---------------------------*/
+.rotation3D__line {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    display: block;
+    width: 2px;
+    height: 50%;
+    padding-top: 60px;
+    color: #fff;
+    font-size: 50px;
+    /*background: #fff;*/
+    /*原点设置在中间*/
+    transform-origin: 50% 0;
+    transform-style: preserve-3d;
+}
+
+.rotation3D__line .pos {
+    position: absolute;
+    top: 0;
+}
+
+.rotation3D__line svg {
+    position: absolute;
+    top: 0;
+}
+
+.rotation3D__line svg path {
+    stroke: #fff;
+    fill: none;
+    stroke-width: 3;
+    animation: path-animation 100s linear 0s infinite normal;
+}
+
+@keyframes path-animation {
+    0% {
+        stroke-dashoffset: 500;
+    }
+
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+.rotation3D__line .dot {
+    position: absolute;
+    top: 0;
+    left: 0;
+    text-align: center;
+    /*width: 35px; height: 35px; font-size: 35px; */
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+}
+
+.rotation3D__line .dot1,
+.rotation3D__line .dot3,
+.rotation3D__line .dot4 {
+    animation: svg-path-animation 6s ease-in-out 0s infinite normal;
+}
+
+.rotation3D__line .dot1 {
+    offset-path: path("M0 400, 0 0");
+    offset-distance: 0%;
+}
+
+.rotation3D__line .dot2 {
+    offset-path: path("M0 200, 0 0");
+    offset-distance: 0%;
+    background: #ffd200;
+    border-radius: 100%;
+    font-size: 22px;
+    color: #000;
+}
+
+.rotation3D__line .dot3 {
+    offset-path: path("M20 400 S 0 200, 20 0");
+    offset-distance: 0%;
+}
+
+.rotation3D__line .dot4 {
+    offset-path: path("M20 0 S 40 200, 20 400");
+    offset-distance: 0%;
+}
+
+@keyframes svg-path-animation {
+    from {
+        offset-distance: 0%;
+    }
+
+    to {
+        offset-distance: 100%;
+    }
+}
+
+/*颜色*/
+.rotation3D__line.blue {
+    color: #07b2f9;
+}
+
+.rotation3D__line.green {
+    color: #00ff5b;
+}
+
+.rotation3D__line.yellow {
+    color: #ffd500;
+}
+
+.rotation3D__line.blue svg path {
+    stroke: #07b2f9;
+}
+
+.rotation3D__line.green svg path {
+    stroke: #00ff5b;
+}
+
+.rotation3D__line.yellow svg path {
+    stroke: #ffd500;
+}

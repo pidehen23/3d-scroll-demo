@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="./jquery.js"></script>
+    <script src="./rotation3D.js"></script>
+    <link rel="stylesheet" href="./iconfont.css">
+    <link rel="stylesheet" href="./test.css">
+    <link rel="stylesheet" href="./rotation3D.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+
+        .wrap {
+            width: 500px;
+            height: 500px;
+            border: 1px solid red;
+        }
+
+        .rotation3D-box {
+            height: calc(100% - 10px);
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            background-color: #eee;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        <div class="num-list">
+        </div>
+    </div>
+    <div class="wrap">
+        <div class="rotation3D-box">
+            <div class="rotation3D-baseMap"></div>
+            <!--旋转3D-->
+            <div id="rotation3D" class="rotation3D">
+                <div class="center">线索库</div>
+                <div class="itemList">
+                    <div class="rotation3D__item">
+                        <div class="scale">
+                            <img src="./image/rotation.png" class="baseImg"></img>
+                            <div class="num">999</div>
+                            <div class="title">公益诉讼</div>
+                        </div>
+                    </div>
+                    <div class="rotation3D__item">
+                        <div class="scale">
+                            <img src="./image/rotation.png" class="baseImg"></img>
+                            <div class="num"></div>
+                            <div class="title">民事检察(待开发)</div>
+                        </div>
+                    </div>
+                    <div class="rotation3D__item">
+                        <div class="scale">
+                            <img src="./image/rotation.png" class="baseImg"></img>
+                            <div class="num">999</div>
+                            <div class="title">刑事检察</div>
+                        </div>
+                    </div>
+                    <div class="rotation3D__item">
+                        <div class="scale">
+                            <img src="./image/rotation.png" class="baseImg"></img>
+                            <div class="num"></div>
+                            <div class="title">行政检察(待开发)</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <script>
+        function myDebounce(fn, timeout) {
+            let time = null
+            return function () {
+                if (time) {
+                    clearTimeout(time)
+                }
+                time = setTimeout(fn, timeout)
+            }
+        }
+        // 4个类目对应的数据，下标需要对应上
+        let rotation3D = null
+
+        function ininRotation3D() {
+            rotation3D = new Rotation3D({
+                id: '#rotation3D',
+                farScale: 0.6,
+                // farScale: 1,
+                xRadius: 80, //x半径压缩
+                yRadius: 120, //y半径压缩
+                autoPlay: true,
+                autoPlayDelay: 3000,
+                // 每次旋转的回调
+                rotatCallback: function (index) {
+                    console.log(index);
+                },
+                // 点击选择的回调，index是元素的下标
+                clickCallback: function (index) {
+                    console.log(index)
+                }
+            })
+        }
+        ininRotation3D()
+
+        const rotation3DResize = myDebounce(() => {
+            if (rotation3D) {
+                rotation3D.close()
+                rotation3D = null
+                ininRotation3D()
+            }
+        }, 1000)
+
+        window.addEventListener("resize", rotation3DResize)
+
+        let x = 999999;
+        let maxCount = 6;
+
+        function initNum() {
+            const numList = document.querySelector(".num-list");
+            numList.innerHTML = ""; // 清空当前的数字显示区域
+            for (let i = 0; i < maxCount; i++) {
+                let num = `
+            <div class="num-item">
+                <i class="iconfont icon-shuzi0"></i>
+            </div>
+        `;
+                numList.innerHTML += num;
+            }
+        }
+
+        function updateNumItems() {
+            const numList = document.querySelector(".num-list");
+            while (x.toString().length > maxCount) {
+                let num = `
+            <div class="num-item">
+                <i class="iconfont icon-shuzi0"></i>
+            </div>
+        `;
+                numList.innerHTML += num;
+                maxCount++;
+            }
+        }
+
+        function numChange() {
+            updateNumItems();
+            const numItemList = document.querySelectorAll('.num-item i');
+            x.toString().padStart(maxCount, "0").split('').forEach((num, i) => {
+                numItemList[i].className = `iconfont icon-shuzi${num}`;
+            });
+            x += 1;
+        }
+
+        initNum();
+        setInterval(() => {
+            numChange();
+        }, 1000);
+
+
+
+
+    </script>
+</body>
+
+</html>
