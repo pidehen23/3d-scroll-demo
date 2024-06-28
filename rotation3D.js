@@ -1,358 +1,264 @@
-(function () {
-  var cancelFrame =
+(() => {
+  const cancelFrame =
     window.cancelAnimationFrame || window.cancelRequestAnimationFrame;
-  var requestFrame = window.requestAnimationFrame;
-  var time =
+  const requestFrame = window.requestAnimationFrame;
+  const time =
     !window.performance || !window.performance.now
-      ? function () {
-          return +new Date();
-        }
-      : function () {
-          return performance.now();
-        };
+      ? () => +new Date()
+      : () => performance.now();
 
-  /**
-   * 计算两点距离
-   * @param points
-   * @returns {number}
-   * distance([{x:0,y:0},{x:1,y:1}]);
-   */
-  var distance = function (points) {
-    var p1 = points[0];
-    var p2 = points[1];
-    var a = p2.x - p1.x;
-    var b = p2.y - p1.y;
+  const distance = (points) => {
+    const [p1, p2] = points;
+    const a = p2.x - p1.x;
+    const b = p2.y - p1.y;
     return Math.sqrt(a * a + b * b);
   };
 
-  /**
-   * 圆公式
-   * @param rotation 弧度
-   * 计算公式：
-   * Math.PI;     //圆周率
-   * Math.sin();  //正弦 x      -左 +右
-   * Math.cos;    //余弦 y      -下 +上
-   */
-  var circleMath = {
-    /**
-     * 根据弧度计算角度
-     * @param rotation 弧度
-     * rotation, farScale, xs, xr, ys, yr, itemWidth
-     */
-    // parseRotate: function (rotation) {
-    //     return (180 / Math.PI * rotation) - 180;
-    // },
-    parseRotate: function (rotation, self) {
-      var sin = Math.sin(rotation),
-        cos = Math.cos(rotation);
-      var sin_cos = sin * cos; //得出偏移正负值，从0°向左依次 +-+-
-      var angle = (180 / Math.PI) * rotation - 180;
-      var lastAngle = angle;
+  const circleMath = {
+    parseRotate: (rotation, self) => {
+      const sin = Math.sin(rotation);
+      const cos = Math.cos(rotation);
+      const sin_cos = sin * cos;
+      const angle = (180 / Math.PI) * rotation - 180;
+      let lastAngle = angle;
 
       lastAngle = angle + self.yr * (sin_cos / (Math.PI + 1));
-
       return lastAngle;
     },
-    /**
-     * 计算scale,x,y
-     * scale    最小尺寸 + ((1 - 最小尺寸) * (sin正弦 + 1) * 0.5)
-     * x        x起点 + (尺寸 * cos余弦 * x半径) - 元素宽度一半
-     * y        y起点 + (尺寸 * sin正弦 * x半径) - 元素宽度一半
-     * farScale, xs, xr, ys, yr, itemWidth
-     */
-    parseSXY: function (rotation, self) {
-      var farScale = self.farScale;
-      var itemWidth = self.itemWidth;
-      var xs = self.xs;
-      var xr = self.xr;
-      var ys = self.ys;
-      var yr = self.yr;
-      var sin = Math.sin(rotation),
-        cos = Math.cos(rotation);
-      var scale = farScale + (1 - farScale) * (sin + 1) * 0.5; //单个尺寸
+    parseSXY: (rotation, self) => {
+      const { farScale, itemWidth, xs, xr, ys, yr } = self;
+      const sin = Math.sin(rotation);
+      const cos = Math.cos(rotation);
+      const scale = farScale + (1 - farScale) * (sin + 1) * 0.5;
 
-      // 按设置尺寸
-      // var x = xs + (scale * cos * xr) - (itemWidth * 0.5);
-      // var y = ys + (scale * sin * yr) - (itemWidth * 0.5);
-      // 不使用压缩
-      // var x = xs + (cos * xs) - (itemWidth * 0.5);
-      // var y = ys + (sin * ys) - (itemWidth * 0.5);
-      // 使用压缩
-      var x = xs + cos * xr - itemWidth * 0.5;
-      var y = ys + sin * yr - itemWidth * 0.5;
-      var distanceNumber = distance([
+      const x = xs + cos * xr - itemWidth * 0.5;
+      const y = ys + sin * yr - itemWidth * 0.5;
+      const distanceNumber = distance([
         {
-          x: self.$rotation.width() / 2 - self.$item.width() / 2,
-          y: self.$rotation.height() / 2 - self.$item.height() / 2,
+          x: self.$rotation.offsetWidth / 2 - itemWidth / 2,
+          y: self.$rotation.offsetHeight / 2 - self.itemHeight / 2,
         },
-        { x: x, y: y },
+        { x, y },
       ]);
 
-      // console.log({x:self.$rotation.width()/2, y:self.$rotation.height()/2})
-      // console.log('x,y',x,y)
-      // console.log('两点距离',distanceNumber)
-
-      return {
-        x: x,
-        y: y,
-        scale: scale,
-        distanceNumber: distanceNumber,
-      };
+      return { x, y, scale, distanceNumber };
     },
   };
-  /**
-   * 3D旋转
-   * @param id
-   */
-  var Rotation3D = (window.Rotation3D = function (_opts) {
-    var self = this;
-    this.$rotation = $(_opts.id);
-    this.$lineList = this.$rotation.find(".lineList");
-    this.$item = this.$rotation.find(".rotation3D__item");
-    this.$line = this.$rotation.find(".rotation3D__line");
-    this.itemWidth = this.$item.width();
-    this.itemHeight = this.$item.height();
-    this.length = this.$item.length;
-    // 圆计算
-    this.rotation = Math.PI / 2; //圆周率/2
-    this.destRotation = this.rotation;
 
-    var xr = this.$rotation.width() * 0.5;
-    var yr = this.$rotation.height() * 0.5;
-    var xRadius = _opts.xRadius || 0;
-    var yRadius = _opts.yRadius || 0;
+  class Rotation3D {
+    constructor(_opts) {
+      this.$rotation = document.querySelector(_opts.id);
+      if (!this.$rotation) {
+        console.error("Rotation container not found");
+        return;
+      }
 
-    var opts = Object.assign(
-      {
-        farScale: 1, // 最小尺寸
-        xs: xr, // x起点
-        ys: yr, // y起点
-        xr: xr - xRadius, // x半径-压缩
-        yr: yr - yRadius, // y半径-压缩
-        // 播放
+      this.$lineList = this.$rotation.querySelector(".lineList");
+      this.$item = this.$rotation.querySelectorAll(".rotation3D__item");
+      this.$line = this.$rotation.querySelectorAll(".rotation3D__line");
+
+      if (!this.$item.length) {
+        console.error("No rotation items found");
+        return;
+      }
+
+      if (!this.$line.length) {
+        // console.error("No rotation lines found");
+        // return;
+      }
+
+      this.itemWidth = this.$item[0].offsetWidth;
+      this.itemHeight = this.$item[0].offsetHeight;
+      this.length = this.$item.length;
+      this.rotation = Math.PI / 2;
+      this.destRotation = this.rotation;
+
+      const xr = this.$rotation.offsetWidth * 0.5;
+      const yr = this.$rotation.offsetHeight * 0.5;
+      const { xRadius = 0, yRadius = 0 } = _opts;
+
+      const opts = {
+        farScale: 1,
+        xs: xr,
+        ys: yr,
+        xr: xr - xRadius,
+        yr: yr - yRadius,
         autoPlay: false,
         autoPlayDelay: 3000,
         currenIndex: -1,
-        fps: 30,
+        fps: 60,
         speed: 4,
-        rotatCallback: function (index) {
-          console.log(index, 1111111111);
+        rotatCallback: (index) => console.log(index, 1111111111),
+        clickCallback: (index) => console.log(index, 222222222),
+        close: () => {
+          clearInterval(this.autoPlayTimer);
+          this.autoPlayTimer = null;
         },
-        clickCallback: function (index) {
-          console.log(index, 222222222);
-        },
-        close: function () {
-          clearInterval(self.autoPlayTimer);
-          self.autoPlayTimer = null;
-        },
-      },
-      _opts
-    );
-    Object.assign(this, opts);
+        ..._opts,
+      };
+      Object.assign(this, opts);
 
-    // 遍历子元素
-    this.$item.each(function (index) {
-      $(this).click(function () {
-        $(this).addClass("active").siblings().removeClass("active");
-        self.goTo(index);
-        self.clickCallback(index);
+      this.$item.forEach((item, index) => {
+        item.addEventListener("click", () => {
+          item.classList.add("active");
+          Array.from(item.parentElement.children).forEach((sibling) => {
+            if (sibling !== item) sibling.classList.remove("active");
+          });
+          this.goTo(index);
+          this.clickCallback(index);
+        });
       });
-    });
-    // 当前控件进入离开
-    this.$rotation.mouseenter(function () {
-      clearInterval(self.autoPlayTimer);
-    });
-    this.$rotation.mouseleave(function () {
-      self.onAutoPlay();
-    });
 
-    this.onAutoPlay();
-    this.render();
-    this.goTo(self.currenIndex);
-  });
-  /**
-   * item样式
-   * x    x起点 + (尺寸 * 余弦 * x压缩) - 元素宽度一半
-   * y    y起点 + (尺寸 * 正弦 * y压缩) - 元素宽度一半
-   */
-  Rotation3D.prototype.itemStyle = function ($item, index, rotation) {
-    // console.log(rotation)
-    var parseSXY = circleMath.parseSXY(rotation, this);
-    var scale = parseSXY.scale;
-    var x = parseSXY.x;
-    var y = parseSXY.y;
-    var $line = this.$lineList.find(".rotation3D__line").eq(index);
+      this.$rotation.addEventListener("mouseenter", () =>
+        clearInterval(this.autoPlayTimer)
+      );
+      this.$rotation.addEventListener("mouseleave", () => this.onAutoPlay());
 
-    //设置当前子菜单的位置（left,top） = (x,y)
-    $item.find(".scale").css({
-      transform: `scale(${scale})`,
-      // 'top': `${this.itemWidth * (1-scale) }`,
-    });
-    $item.css({
-      position: "absolute",
-      display: "inline-block",
-      // opacity: scale,
-      "z-index": parseInt(scale * 100),
-      "transform-origin": "0px 0px",
-      // 'transform': `translate(${x}px, ${y}px) scale(${scale})`,
-      transform: `translate(${x}px, ${y}px)`,
-    });
-
-    /**
-     * 线样式
-     */
-    $line.css({
-      height: parseSXY.distanceNumber,
-    });
-    $line.find("svg").css({
-      height: parseSXY.distanceNumber,
-    });
-    $line.find(".dot1").css({
-      "offset-path": `path("M0 ${parseSXY.distanceNumber}, 0 0")`,
-    });
-    $line.find("#path1").attr({
-      d: `M0 ${parseSXY.distanceNumber}, 0 0`,
-    });
-
-    $line.find(".dot2").css({
-      "offset-path": `path("M0 ${parseSXY.distanceNumber / 2}, 0 0")`,
-    });
-    $line.find("#path2").attr({
-      d: `M0 ${parseSXY.distanceNumber}, 0 0`,
-    });
-
-    $line.find(".dot3").css({
-      "offset-path": `path("M20 ${parseSXY.distanceNumber} S 0 ${
-        parseSXY.distanceNumber / 2
-      }, 20 0")`,
-    });
-    $line.find("#path3").attr({
-      d: `M20 ${parseSXY.distanceNumber} S 0 ${
-        parseSXY.distanceNumber / 2
-      }, 20 0`,
-    });
-
-    $line.find(".dot4").css({
-      "offset-path": `path("M20 0 S 40 ${parseSXY.distanceNumber / 2}, 20 ${
-        parseSXY.distanceNumber
-      }")`,
-    });
-    $line.find("#path4").attr({
-      d: `M20 0 S 40 ${parseSXY.distanceNumber / 2}, 20 ${
-        parseSXY.distanceNumber
-      }`,
-    });
-  };
-  /**
-   * line样式
-   */
-  Rotation3D.prototype.lineStyle = function ($line, index, rotation) {
-    var rotate = circleMath.parseRotate(rotation, this);
-    // console.log(rotate)
-
-    $line.css({
-      transform: "rotate(" + rotate + "deg)",
-    });
-    this.$lineList.css({
-      // transform: `rotateX(${this.yRadius / 3}deg)`,
-    });
-  };
-
-  /**
-   * 旋转至index
-   */
-  Rotation3D.prototype.goTo = function (index) {
-    var self = this;
-    this.currenIndex = index;
-    /**
-     * 1.计算floatIndex,用于控死amdiff
-     */
-    var itemsRotated =
-      (this.length * (Math.PI / 2 - this.rotation)) / (2 * Math.PI);
-    var floatIndex = itemsRotated % this.length;
-    if (floatIndex < 0) {
-      floatIndex = floatIndex + this.length;
+      this.onAutoPlay();
+      this.render();
+      this.goTo(this.currenIndex);
     }
 
-    /**
-     * 2.计算diff,判断方向正反
-     */
-    var diff = index - (floatIndex % this.length);
-    if (2 * Math.abs(diff) > this.length) {
-      diff -= diff > 0 ? this.length : -this.length;
-    }
-    // 停止任何正在进行的旋转
-    this.destRotation += ((2 * Math.PI) / this.length) * -diff;
-    this.scheduleNextFrame();
-  };
-  /**
-   * 定时器渐近旋转
-   */
-  Rotation3D.prototype.scheduleNextFrame = function () {
-    var self = this;
-    this.lastTime = time();
-    // 暂停
-    var pause = function () {
-      cancelFrame ? cancelFrame(this.timer) : clearTimeout(self.timer);
-      self.timer = 0;
-    };
-    // 渐进播放
-    var playFrame = function () {
-      var rem = self.destRotation - self.rotation;
-      var now = time(),
-        dt = (now - self.lastTime) * 0.002;
-      self.lastTime = now;
-      // console.log('rem',rem)
+    itemStyle($item, index, rotation) {
+      const { scale, x, y, distanceNumber } = circleMath.parseSXY(
+        rotation,
+        this
+      );
+      const $line =
+        this.$lineList?.querySelectorAll?.(".rotation3D__line")?.[index];
 
-      if (Math.abs(rem) < 0.003) {
-        self.rotation = self.destRotation;
-        pause();
-      } else {
-        // 渐近地接近目的地
-        self.rotation = self.destRotation - rem / (1 + self.speed * dt);
-        self.scheduleNextFrame();
-      }
-      self.render();
-    };
+      $item.querySelector(".scale").style.transform = `scale(${scale})`;
+      Object.assign($item.style, {
+        position: "absolute",
+        display: "inline-block",
+        zIndex: parseInt(scale * 100),
+        transformOrigin: "0px 0px",
+        transform: `translate(${x}px, ${y}px)`,
+      });
 
-    this.timer = cancelFrame
-      ? requestFrame(playFrame)
-      : setTimeout(playFrame, 1000 / this.fps);
-  };
-  /**
-   * 更新
-   */
-  Rotation3D.prototype.render = function () {
-    var self = this;
+      if ($line) {
+        try {
+          $line.style.height = `${distanceNumber}px`;
+          $line.querySelector("svg").style.height = `${distanceNumber}px`;
+          $line.querySelector(
+            ".dot1"
+          ).style.offsetPath = `path("M0 ${distanceNumber}, 0 0")`;
+          $line
+            .querySelector("#path1")
+            .setAttribute("d", `M0 ${distanceNumber}, 0 0`);
 
-    // 图形间隔：弧度
-    var spacing = (2 * Math.PI) / this.$item.length;
-    var itemRotation = this.rotation;
-    var lineRotation = this.rotation + Math.PI / 2;
+          $line.querySelector(".dot2").style.offsetPath = `path("M0 ${
+            distanceNumber / 2
+          }, 0 0")`;
+          $line
+            .querySelector("#path2")
+            .setAttribute("d", `M0 ${distanceNumber}, 0 0`);
 
-    this.$item.each(function (index) {
-      self.itemStyle($(this), index, itemRotation);
-      itemRotation += spacing;
-    });
-    this.$line.each(function (index) {
-      self.lineStyle($(this), index, lineRotation);
-      lineRotation += spacing;
-    });
-  };
-  /**
-   * 自动播放
-   */
-  Rotation3D.prototype.onAutoPlay = function () {
-    var self = this;
+          $line.querySelector(
+            ".dot3"
+          ).style.offsetPath = `path("M20 ${distanceNumber} S 0 ${
+            distanceNumber / 2
+          }, 20 0")`;
+          $line
+            .querySelector("#path3")
+            .setAttribute(
+              "d",
+              `M20 ${distanceNumber} S 0 ${distanceNumber / 2}, 20 0`
+            );
 
-    if (this.autoPlay) {
-      this.autoPlayTimer = setInterval(function () {
-        if (self.currenIndex < 0) {
-          self.currenIndex = self.length - 1;
+          $line.querySelector(".dot4").style.offsetPath = `path("M20 0 S 40 ${
+            distanceNumber / 2
+          }, 20 ${distanceNumber}")`;
+          $line
+            .querySelector("#path4")
+            .setAttribute(
+              "d",
+              `M20 0 S 40 ${distanceNumber / 2}, 20 ${distanceNumber}`
+            );
+        } catch (error) {
+          // console.error(error);
         }
-        self.goTo(self.currenIndex);
-        self.currenIndex--; //倒叙
-      }, this.autoPlayDelay);
+      }
     }
-  };
+
+    lineStyle($line, index, rotation) {
+      const rotate = circleMath.parseRotate(rotation, this);
+      if ($line) {
+        $line.style.transform = `rotate(${rotate}deg)`;
+        // this.$lineList.style.transform = `rotateX(${this.yRadius / 3}deg)`;
+      }
+    }
+
+    goTo(index) {
+      this.currenIndex = index;
+
+      let itemsRotated =
+        (this.length * (Math.PI / 2 - this.rotation)) / (2 * Math.PI);
+      let floatIndex = itemsRotated % this.length;
+      if (floatIndex < 0) floatIndex += this.length;
+
+      let diff = index - (floatIndex % this.length);
+      if (2 * Math.abs(diff) > this.length)
+        diff -= diff > 0 ? this.length : -this.length;
+
+      this.destRotation += ((2 * Math.PI) / this.length) * -diff;
+      this.scheduleNextFrame();
+    }
+
+    scheduleNextFrame() {
+      this.lastTime = time();
+
+      const pause = () => {
+        cancelFrame ? cancelFrame(this.timer) : clearTimeout(this.timer);
+        this.timer = 0;
+      };
+
+      const playFrame = () => {
+        const rem = this.destRotation - this.rotation;
+        const now = time();
+        const dt = (now - this.lastTime) * 0.002;
+        this.lastTime = now;
+
+        if (Math.abs(rem) < 0.003) {
+          this.rotation = this.destRotation;
+          pause();
+        } else {
+          this.rotation = this.destRotation - rem / (1 + this.speed * dt);
+          this.scheduleNextFrame();
+        }
+        this.render();
+      };
+
+      this.timer = cancelFrame
+        ? requestFrame(playFrame)
+        : setTimeout(playFrame, 1000 / this.fps);
+    }
+
+    render() {
+      const spacing = (2 * Math.PI) / this.$item.length;
+      let itemRotation = this.rotation;
+      let lineRotation = this.rotation + Math.PI / 2;
+
+      this.$item.forEach((item, index) => {
+        this.itemStyle(item, index, itemRotation);
+        itemRotation += spacing;
+      });
+      this.$line.forEach((line, index) => {
+        this.lineStyle(line, index, lineRotation);
+        lineRotation += spacing;
+      });
+    }
+
+    onAutoPlay() {
+      if (this.autoPlay) {
+        this.autoPlayTimer = setInterval(() => {
+          if (this.currenIndex < 0) this.currenIndex = this.length - 1;
+          this.goTo(this.currenIndex);
+          this.currenIndex--;
+        }, this.autoPlayDelay);
+      }
+    }
+  }
+
+  window.Rotation3D = Rotation3D;
 })();

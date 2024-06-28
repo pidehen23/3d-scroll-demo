@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <script src="./jquery.js"></script>
+    <!-- <script src="./jquery.js"></script> -->
     <script src="./rotation3D.js"></script>
     <script src="./vue.js"></script>
     <link rel="stylesheet" href="./iconfont.css">
@@ -35,7 +35,7 @@
         }
 
         .rotation3D-box {
-            height: calc(100% - 10px);
+            height: calc(100% - 0px);
             width: 100%;
             position: relative;
             overflow: hidden;
@@ -57,34 +57,34 @@
             <div class="rotation3D-baseMap"></div>
             <!--旋转3D-->
             <div id="rotation3D" class="rotation3D">
-                <div class="center">线索库</div>
+                <div class="center">中心</div>
                 <div class="itemList">
                     <div class="rotation3D__item">
                         <div class="scale">
                             <img src="./image/rotation.png" class="baseImg"></img>
                             <div class="num">999</div>
-                            <div class="title">公益诉讼</div>
+                            <div class="title">法学</div>
                         </div>
                     </div>
                     <div class="rotation3D__item">
                         <div class="scale">
                             <img src="./image/rotation.png" class="baseImg"></img>
                             <div class="num"></div>
-                            <div class="title">民事检察(待开发)</div>
+                            <div class="title">医学</div>
                         </div>
                     </div>
                     <div class="rotation3D__item">
                         <div class="scale">
                             <img src="./image/rotation.png" class="baseImg"></img>
                             <div class="num">999</div>
-                            <div class="title">刑事检察</div>
+                            <div class="title">药学</div>
                         </div>
                     </div>
                     <div class="rotation3D__item">
                         <div class="scale">
                             <img src="./image/rotation.png" class="baseImg"></img>
                             <div class="num"></div>
-                            <div class="title">行政检察(待开发)</div>
+                            <div class="title">美学</div>
                         </div>
                     </div>
                 </div>
@@ -114,13 +114,14 @@
                 yRadius: 120, //y半径压缩
                 autoPlay: true,
                 autoPlayDelay: 3000,
-                // 每次旋转的回调
-                rotatCallback: function (index) {
-                    console.log(index);
+                currenIndex: 0, // Starting index
+                fps: 60, // Frames per second
+                speed: 4, // Speed of the rotation
+                rotatCallback: function (index) { // Callback for when rotation occurs
+                    console.log('Rotated to item:', index);
                 },
-                // 点击选择的回调，index是元素的下标
-                clickCallback: function (index) {
-                    console.log(index)
+                clickCallback: function (index) { // Callback for item clicks
+                    console.log('Clicked on item:', index);
                 }
             })
         }
